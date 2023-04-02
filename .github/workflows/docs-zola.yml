@@ -14,7 +14,7 @@ jobs:
       - name: lint markdown
         run: just lint-md
 
-  docs:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -27,12 +27,6 @@ jobs:
         with:
           name: docs
           path: docs/public
-
-  # Noop job to statisfy the branch protection.
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
   deploy:
     runs-on: ubuntu-latest
