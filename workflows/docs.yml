@@ -1,0 +1,71 @@
+name: docs
+
+defaults:
+  run:
+    working-directory: docs
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/docs.yml"
+      - "docs/**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    paths:
+      - ".github/workflows/docs.yml"
+      - "docs/**"
+    branches:
+      - main
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: extractions/setup-just@v1
+      - name: lint sass
+        run: just lint-sass
+      - name: lint markdown
+        run: just lint-md
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: build
+        uses: shalzz/zola-deploy-action@v0.16.1-1
+        env:
+          BUILD_DIR: docs
+          BUILD_ONLY: true
+      - uses: actions/upload-artifact@v3
+        with:
+          name: docs
+          path: docs/public
+
+  # Noop job to statisfy the branch protection.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - docs
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: docs
+          path: docs/public
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/public
