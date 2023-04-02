@@ -2,6 +2,12 @@ name: docs
 
 on:
   workflow_call:
+    inputs:
+      build-dir:
+        description: "The path from the root of the repo where we should run the zola build command"
+        default: "docs"
+        required: false
+        type: string
 
 jobs:
   lint:
@@ -21,9 +27,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: build
-        uses: shalzz/zola-deploy-action@v0.17.0
+        uses: shalzz/zola-deploy-action@v0.17.2
         env:
-          BUILD_DIR: docs
+          BUILD_DIR: ${{ inputs.build-dir }}
           BUILD_ONLY: true
 
   deploy:
@@ -34,7 +40,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - name: build
-        uses: shalzz/zola-deploy-action@v0.17.0
+        uses: shalzz/zola-deploy-action@v0.17.2
         env:
-          BUILD_DIR: .
+          BUILD_DIR: ${{ inputs.build-dir }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
