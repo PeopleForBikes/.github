@@ -5,7 +5,7 @@ on:
     inputs:
       build-dir:
         description: "The path from the root of the repo where we should run the zola build command"
-        default: "docs"
+        default: "."
         required: false
         type: string
 
@@ -39,6 +39,7 @@ jobs:
       - build
     if: github.ref == 'refs/heads/main'
     steps:
+      - uses: actions/checkout@v3
       - name: build
         uses: shalzz/zola-deploy-action@v0.17.2
         env:
