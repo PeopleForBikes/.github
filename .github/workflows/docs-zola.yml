@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: build
-        uses: shalzz/zola-deploy-action@e37232516a63e8711048bda4e1afb9e0891f46fa # v0.17.2
+        uses: shalzz/zola-deploy-action@964938f983e3223fbe16fcc626ff1ad803dba1cd # v0.18.0
         env:
           BUILD_DIR: ${{ inputs.build-dir }}
           BUILD_ONLY: true
@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: build
-        uses: shalzz/zola-deploy-action@e37232516a63e8711048bda4e1afb9e0891f46fa # v0.17.2
+        uses: shalzz/zola-deploy-action@964938f983e3223fbe16fcc626ff1ad803dba1cd # v0.18.0
         env:
           BUILD_DIR: ${{ inputs.build-dir }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
