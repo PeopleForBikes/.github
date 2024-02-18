@@ -9,10 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: extractions/setup-just@69d82fb0233557aec017ef13706851d0694e0f1d # v1.6.0
-      - uses: Gr1N/setup-poetry@15821dc8a61bc630db542ae4baf6a7c19a994844 # v8
+      - uses: ts-graphviz/setup-graphviz@d5b2b6b67007094b256f3fd2fa6cf0ac41ceef25 # v2.0.0
+      - uses: Gr1N/setup-poetry@48b0f77c8c1b1b19cb962f0f00dff7b4be8f81ec # v9
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "poetry"
       - name: Setup the project
         run: poetry install
@@ -28,10 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - uses: extractions/setup-just@69d82fb0233557aec017ef13706851d0694e0f1d # v1.6.0
-      - uses: Gr1N/setup-poetry@15821dc8a61bc630db542ae4baf6a7c19a994844 # v8
+      - uses: Gr1N/setup-poetry@48b0f77c8c1b1b19cb962f0f00dff7b4be8f81ec # v9
       - uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "poetry"
       - name: Setup the project
         run: poetry install
