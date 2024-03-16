@@ -4,7 +4,9 @@ on:
   workflow_call:
     inputs:
       build-dir:
-        description: "The path from the root of the repo where we should run the zola build command"
+        description:
+          "The path from the root of the repo where we should run the zola build
+          command"
         default: "."
         required: false
         type: string
@@ -39,7 +41,7 @@ jobs:
       - build
     if: github.ref == 'refs/heads/main'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: build
         uses: shalzz/zola-deploy-action@964938f983e3223fbe16fcc626ff1ad803dba1cd # v0.18.0
         env:
