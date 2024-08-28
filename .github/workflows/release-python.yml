@@ -24,7 +24,7 @@ jobs:
       - name: Build the docs
         run: just docs
       - name: Upload documentation for release
-        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
+        uses: actions/upload-artifact@834a144ee995460fba8ed112a2fc961b36a5ec5a # v4.3.6
         with:
           name: docs
           path: docs/build/html/
