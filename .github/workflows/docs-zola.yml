@@ -1,49 +1,48 @@
 name: docs
 
 on:
-    workflow_call:
-        inputs:
-            build-dir:
-                description:
-                    "The path from the root of the repo where we should run the zola build
-                    command"
-                default: "."
-                required: false
-                type: string
+  workflow_call:
+    inputs:
+      build-dir:
+        description:
+          "The path from the root of the repo where we should run the zola build command"
+        default: "."
+        required: false
+        type: string
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-            - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
-            - name: lint sass
-              run: just lint-sass
-            - name: lint markdown
-              run: just lint-md
-            - name: Check spelling
-              run: just lint-spelling
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+      - name: lint sass
+        run: just lint-sass
+      - name: lint markdown
+        run: just lint-md
+      - name: Check spelling
+        run: just lint-spelling
 
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-            - name: build
-              uses: shalzz/zola-deploy-action@74526e63f38f84b82476349bbcd886b82040ff98 # v0.22.1
-              env:
-                  BUILD_DIR: ${{ inputs.build-dir }}
-                  BUILD_ONLY: true
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: build
+        uses: shalzz/zola-deploy-action@74526e63f38f84b82476349bbcd886b82040ff98 # v0.22.1
+        env:
+          BUILD_DIR: ${{ inputs.build-dir }}
+          BUILD_ONLY: true
 
-    deploy:
-        runs-on: ubuntu-latest
-        needs:
-            - lint
-            - build
-        if: github.ref == 'refs/heads/main'
-        steps:
-            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-            - name: build
-              uses: shalzz/zola-deploy-action@74526e63f38f84b82476349bbcd886b82040ff98 # v0.22.1
-              env:
-                  BUILD_DIR: ${{ inputs.build-dir }}
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  deploy:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: build
+        uses: shalzz/zola-deploy-action@06dffc1b49e4f61b31dcf3a6c824194a78216632 # v0.23.1
+        env:
+          BUILD_DIR: ${{ inputs.build-dir }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
