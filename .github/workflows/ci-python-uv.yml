@@ -1,42 +1,42 @@
 name: ci
 
 on:
-    workflow_call:
+  workflow_call:
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-            - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
-            - uses: ts-graphviz/setup-graphviz@b1de5da23ed0a6d14e0aeee8ed52fdd87af2363c # v2.0.2
-            - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 #v8.2.0
-              with:
-                  enable-cache: true
-            - name: Set up Python
-              run: uv python install
-            - name: Check uv.lock is synced
-              run: uv lock --check
-            - name: Setup the project
-              run: uv sync --all-extras --dev
-            - name: Lint markdown files
-              run: just lint-md
-            - name: Lint Python files
-              run: just lint-python
-            - name: Lint the docs
-              run: just docs
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+      - uses: ts-graphviz/setup-graphviz@b1de5da23ed0a6d14e0aeee8ed52fdd87af2363c # v2.0.2
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d #v10.0.1
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install
+      - name: Check uv.lock is synced
+        run: uv lock --check
+      - name: Setup the project
+        run: uv sync --all-extras --dev
+      - name: Lint markdown files
+        run: just lint-md
+      - name: Lint Python files
+        run: just lint-python
+      - name: Lint the docs
+        run: just docs
 
-    test:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-            - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
-            - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 #v8.2.0
-              with:
-                  enable-cache: true
-            - name: Set up Python
-              run: uv python install
-            - name: Setup the project
-              run: uv sync --all-extras --dev
-            - name: Run the unit tests
-              run: just test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d #v10.0.1
+        with:
+          enable-cache: true
+      - name: Set up Python
+        run: uv python install
+      - name: Setup the project
+        run: uv sync --all-extras --dev
+      - name: Run the unit tests
+        run: just test
