@@ -18,6 +18,18 @@ on:
         description: "Flag enabling the use of the 'latest' tag"
         type: boolean
         default: false
+      platforms:
+        description: "Platforms to build the image for, separated by commas"
+        default: "linux/amd64,linux/arm64"
+        type: string
+      use-cache:
+        description: >-
+          Cache the image layers in ghcr.io, under the 'buildcache' tag. Cached
+          layers are reused until their instructions or their inputs change:
+          packages installed by a cached layer are not updated. The cache is only
+          written when publishing to ghcr.io.
+        type: boolean
+        default: false
     secrets:
       github-role:
         description: "ARN of the federated role to use to deploy from GitHub to AWS."
@@ -28,18 +40,23 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@1f40c72289eff860ee54a304f1438e3cff362e0a # v4.3.0
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Extract repository name
         id: repo-name
-        run: echo "repo_name=${GITHUB_REPOSITORY##*/}" >> $GITHUB_OUTPUT
+        run: |
+          echo "repo_name=${GITHUB_REPOSITORY##*/}" >> "$GITHUB_OUTPUT"
+          # Image references must be lowercase.
+          echo "cache_ref=ghcr.io/${GITHUB_REPOSITORY,,}:buildcache" >> "$GITHUB_OUTPUT"
 
       - name: Log in to the GitHub Container Registry
         if: inputs.push-to-ghcr
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -47,14 +64,14 @@ jobs:
 
       - name: Configure AWS credentials
         if: inputs.push-to-ecr
-        uses: aws-actions/configure-aws-credentials@254c19bd240aabef8777f48595e9d2d7b972184b # v6.2.1
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           role-to-assume: ${{ secrets.github-role }}
           aws-region: ${{ inputs.aws-region }}
       - name: Login to Amazon ECR
         if: inputs.push-to-ecr
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        uses: aws-actions/amazon-ecr-login@7290e214a610b32bc0eef81748948b6d466a8783 # v2.2.0
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
@@ -62,14 +79,16 @@ jobs:
         with:
           images: |
             name=ghcr.io/${{ github.repository }},enable=${{ inputs.push-to-ghcr }}
-            name=${{ steps.login-ecr.outputs.registry }}/${{ steps.repo-name.outputs.repo_name }},enable=${{ inputs.push-to-ecr}}
+            name=${{ steps.login-ecr.outputs.registry }}/${{ steps.repo-name.outputs.repo_name }},enable=${{ inputs.push-to-ecr }}
           flavor: latest=${{ inputs.use-latest }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ inputs.platforms }}
           push: ${{ inputs.push-to-ghcr || inputs.push-to-ecr }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: ${{ inputs.use-cache && format('type=registry,ref={0}', steps.repo-name.outputs.cache_ref) || '' }}
+          cache-to: ${{ inputs.use-cache && inputs.push-to-ghcr && format('type=registry,ref={0},mode=max', steps.repo-name.outputs.cache_ref) || '' }}

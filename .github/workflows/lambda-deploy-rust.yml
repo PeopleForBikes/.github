@@ -1,0 +1,105 @@
+name: lambda-deploy
+
+on:
+  workflow_call:
+    inputs:
+      stage:
+        description: >-
+          Name of the deployment target (e.g. staging, production). Deployments to
+          the same stage run one at a time, different stages never block each
+          other.
+        required: true
+        type: string
+      lambdas:
+        description: "Names of the lambdas to deploy, separated by whitespace"
+        required: true
+        type: string
+      aws-region:
+        description: "Specifies the AWS region to use"
+        required: true
+        type: string
+      working-directory:
+        description: "Path of the crate containing the lambdas"
+        default: "lambdas"
+        type: string
+      version-package:
+        description: >-
+          Name of a workspace package whose version must match the tag being
+          deployed. The check is skipped when empty.
+        default: ""
+        type: string
+      cargo-lambda-version:
+        description: "Version of cargo-lambda to use"
+        default: "1.9.2"
+        type: string
+      use-cache:
+        description: "Cache the dependencies between the builds"
+        default: true
+        type: boolean
+    secrets:
+      github-role:
+        description: "ARN of the federated role to use to deploy from GitHub to AWS."
+        required: true
+      lambda-role:
+        description: "ARN of the execution role of the lambdas."
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      # This is required for requesting the JWT.
+      id-token: write
+      # This is required for actions/checkout.
+      contents: read
+    concurrency:
+      group: lambda-deploy-${{ inputs.stage }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@df2a88e9fe4098bad09cb42c3dec7187f15861fc # master 2026-11-15
+        with:
+          toolchain: stable
+      - name: Ensure the tag matches the package version
+        if: inputs.version-package != ''
+        env:
+          PACKAGE: ${{ inputs.version-package }}
+        run: |
+          VERSION=$(cargo pkgid -p "${PACKAGE}" | sed 's/.*[#@]//')
+          if [ "${GITHUB_REF_NAME}" != "${VERSION}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match the version of ${PACKAGE} (${VERSION})."
+            exit 1
+          fi
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        if: inputs.use-cache
+      - name: Install cargo lambda
+        env:
+          CARGO_LAMBDA_VERSION: ${{ inputs.cargo-lambda-version }}
+        run: pip install "cargo-lambda==${CARGO_LAMBDA_VERSION}"
+      - name: Build all lambdas
+        working-directory: ${{ inputs.working-directory }}
+        run: cargo lambda build --release --locked
+
+      # The credentials are only requested once the build succeeded.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ secrets.github-role }}
+          aws-region: ${{ inputs.aws-region }}
+      - name: Deploy the lambdas
+        env:
+          LAMBDAS: ${{ inputs.lambdas }}
+          LAMBDA_ROLE: ${{ secrets.lambda-role }}
+        run: |
+          # Deploy every lambda, even when one of them fails.
+          failed=""
+          for lambda in ${LAMBDAS}; do
+            echo "Deploying ${lambda}"
+            cargo lambda deploy --iam-role "${LAMBDA_ROLE}" "${lambda}" || failed="${failed} ${lambda}"
+          done
+          if [ -n "${failed}" ]; then
+            echo "::error::Failed to deploy:${failed}"
+            exit 1
+          fi
